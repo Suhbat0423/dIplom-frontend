@@ -6,8 +6,13 @@ import HeaderConst from "./HeaderConst";
 export default function HeaderWrapper() {
   const pathname = usePathname();
 
-  if (pathname === "/" || pathname === "/admin" || pathname === "/shop")
+  if (
+    pathname === "/" ||
+    pathname === "/admin" ||
+    pathname.startsWith("/shop")
+  ) {
     return null;
+  }
 
   return <HeaderConst />;
 }
