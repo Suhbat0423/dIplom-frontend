@@ -5,9 +5,10 @@ const Input = ({
   value,
   onChange,
   error,
+  ...props
 }) => {
   return (
-    <div className="flex flex-col gap-1 w-full">
+    <div className="flex w-full flex-col gap-1">
       {label && <label className="text-sm">{label}</label>}
 
       <input
@@ -15,8 +16,10 @@ const Input = ({
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        className={`w-full border rounded-lg px-4 py-3 text-sm bg-white focus:outline-none
-        ${error ? "border-red-500" : "border-zinc-300 focus:border-black"}`}
+        className={`w-full rounded-lg border bg-white px-4 py-3 text-sm focus:outline-none ${
+          error ? "border-red-500" : "border-zinc-300 focus:border-black"
+        }`}
+        {...props}
       />
 
       {error && <p className="text-xs text-red-500">{error}</p>}

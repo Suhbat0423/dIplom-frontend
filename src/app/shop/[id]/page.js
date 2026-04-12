@@ -1,25 +1,23 @@
 "use client";
 
-import { use, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
-const StorePage = ({ params }) => {
-  const { id } = use(params);
+const StorePage = () => {
+  const { id } = useParams();
   const router = useRouter();
+  const { loading, isAuthenticated } = useRequireAuth();
 
   useEffect(() => {
-    const token = window.localStorage.getItem("token");
-    if (!token) {
-      router.replace("/");
+    if (loading || !isAuthenticated || !id) {
+      return;
     }
-  }, [router]);
 
-  return (
-    <div className=" flex w-full h-screen bg-red-300">
-      <div className="w-64 p-4"> sidebar</div>
-      <div className="w-full p-4 bg-red-500"> chart</div>
-    </div>
-  );
+    router.replace(`/shop/${id}/dashboard`);
+  }, [id, isAuthenticated, loading, router]);
+
+  return null;
 };
 
 export default StorePage;

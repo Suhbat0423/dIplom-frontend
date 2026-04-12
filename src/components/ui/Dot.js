@@ -1,7 +1,7 @@
 const Dot = ({ x = "50%", y = "50%", size = 200 }) => {
   return (
     <div
-      className="pointer-events-none absolute rounded-full blur-3xl opacity-40"
+      className="pointer-events-none absolute rounded-full opacity-40 blur-3xl"
       style={{
         top: y,
         left: x,

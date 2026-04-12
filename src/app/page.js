@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
-import Header from "../components/Header";
+
+import { useState } from "react";
+import SiteHeader from "@/components/layout/SiteHeader";
 
 const sections = [
   {
@@ -25,7 +26,7 @@ export default function Home() {
 
   return (
     <>
-      <Header scrollY={scrollY} animated />
+      <SiteHeader scrollY={scrollY} variant="transparent" />
       <div
         id="scroll-container"
         className="w-full h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide"

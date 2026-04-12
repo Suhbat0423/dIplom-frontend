@@ -1,9 +1,7 @@
-// components/AnimatedLogo.js
 import Link from "next/link";
 
-const AnimatedLogo = ({ scrollY = 0 }) => {
-  const progress = Math.min(scrollY / 300, 1);
-
+const AnimatedLogo = ({ scrollY = 0, animated = false }) => {
+  const progress = animated ? Math.min(scrollY / 300, 1) : 1;
   const scale = 1 + (1 - progress) * 6;
   const opacity = 0.9 + (1 - progress) * 0.6;
   const letterSpacing = (1 - progress) * 12;
@@ -14,7 +12,7 @@ const AnimatedLogo = ({ scrollY = 0 }) => {
 
   return (
     <div
-      className="font-bold text-xl absolute top-2"
+      className="absolute top-2 font-bold text-xl"
       style={{
         left: `calc(${leftPercent}% + ${leftPx}px)`,
         transform: `translate(${translateXPercent}%, ${translateY}vh) scale(${scale})`,
