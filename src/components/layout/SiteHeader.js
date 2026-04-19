@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Cart, Search, User } from "@/assets/icons";
 import AnimatedLogo from "@/components/layout/AnimatedLogo";
 
@@ -9,52 +12,107 @@ const navItems = [
   { label: "About", href: "/about" },
 ];
 
-const actionItems = [
-  { label: "Search", href: "/search", Icon: Search },
-  { label: "Cart", href: "/cart", Icon: Cart },
-  { label: "User", href: "/user", Icon: User },
-];
-
 const SiteHeader = ({ scrollY = 0, variant = "solid" }) => {
+  const pathname = usePathname();
   const isTransparent = variant === "transparent";
-  const containerClass = isTransparent
-    ? "bg-transparent text-white hover:bg-white hover:text-black"
-    : "border-b border-gray-300 bg-white text-black shadow-sm";
+  const getNavClass = (href, activeClass, inactiveClass = "") => {
+    const isActive = pathname === href || pathname.startsWith(`${href}/`);
+    return `${inactiveClass} ${
+      isActive ? activeClass : ""
+    } transition-colors duration-200`;
+  };
+
+  if (isTransparent) {
+    return (
+      <div
+        className="flex w-full h-14 bg-transparent justify-between px-8 items-center fixed top-0 left-0 text-white hover:bg-white hover:text-black transition-colors duration-300"
+        style={{ zIndex: 100 }}
+      >
+        <AnimatedLogo scrollY={scrollY} />
+        <h1 className="text-transparent hover:text-black">High End®</h1>
+        <ul className="flex gap-6 mx-auto">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              className={getNavClass(
+                item.href,
+                "underline underline-offset-4 decoration-2",
+                "hover:text-gray-600",
+              )}
+              href={item.href}
+            >
+              <li>{item.label}</li>
+            </Link>
+          ))}
+        </ul>
+
+        <ul className="flex gap-6">
+          <Link className="hover:text-gray-600" href="/search">
+            <li>
+              <Search />
+            </li>
+          </Link>
+          <Link className="hover:text-gray-600" href="/cart">
+            <li>
+              <Cart />
+            </li>
+          </Link>
+          <li>
+            <Link className="hover:text-gray-600" href="/user">
+              <User />
+            </Link>
+          </li>
+        </ul>
+      </div>
+    );
+  }
 
   return (
-    <header
-      className={`fixed left-0 top-0 flex h-12 w-full items-center justify-between px-20 transition-colors duration-300 ${containerClass}`}
+    <div
+      className="flex w-full h-14 bg-white justify-between px-8 items-center border-b-1 border-gray-300 fixed top-0 left-0 text-shadow-gray-700 shadow-m"
       style={{ zIndex: 100 }}
     >
-      <AnimatedLogo scrollY={scrollY} animated={isTransparent} />
-      <h1 className={isTransparent ? "text-transparent hover:text-black" : "sr-only"}>
-        High End®
-      </h1>
+      <div
+        className="font-bold text-xl text-black "
+        style={{ fontFamily: "Georgia, serif" }}
+      >
+        <Link href="/">High® End</Link>
+      </div>
 
-      <nav aria-label="Main navigation">
-        <ul className={`flex gap-6 ${isTransparent ? "mx-auto" : "ml-[-38px]"}`}>
-          {navItems.map((item) => (
-            <li key={item.href}>
-              <Link className="hover:text-gray-600" href={item.href}>
-                {item.label}
-              </Link>
+      <ul className="flex gap-6 ml-[-38px]">
+        {navItems.map((item) => (
+          <Link key={item.href} href={item.href}>
+            <li
+              className={getNavClass(
+                item.href,
+                "underline underline-offset-4 decoration-2",
+                "hover:text-gray-500",
+              )}
+            >
+              {item.label}
             </li>
-          ))}
-        </ul>
-      </nav>
+          </Link>
+        ))}
+      </ul>
 
-      <nav aria-label="Account navigation">
-        <ul className="flex gap-6">
-          {actionItems.map(({ label, href, Icon }) => (
-            <li key={href}>
-              <Link className="hover:text-gray-600" href={href} aria-label={label}>
-                <Icon />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-    </header>
+      <ul className="flex gap-6">
+        <Link href="/search">
+          <li>
+            <Search />
+          </li>
+        </Link>
+        <Link href="/cart">
+          <li>
+            <Cart />
+          </li>
+        </Link>
+        <li>
+          <Link href="/user">
+            <User />
+          </Link>
+        </li>
+      </ul>
+    </div>
   );
 };
 

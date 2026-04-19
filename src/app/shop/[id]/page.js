@@ -1,23 +1,9 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
+const StorePage = async ({ params }) => {
+  const { id } = await params;
 
-const StorePage = () => {
-  const { id } = useParams();
-  const router = useRouter();
-  const { loading, isAuthenticated } = useRequireAuth();
-
-  useEffect(() => {
-    if (loading || !isAuthenticated || !id) {
-      return;
-    }
-
-    router.replace(`/shop/${id}/dashboard`);
-  }, [id, isAuthenticated, loading, router]);
-
-  return null;
+  redirect(`/shop/${id}/dashboard`);
 };
 
 export default StorePage;

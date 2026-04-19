@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-const AnimatedLogo = ({ scrollY = 0, animated = false }) => {
-  const progress = animated ? Math.min(scrollY / 300, 1) : 1;
+const AnimatedLogo = ({ scrollY = 0 }) => {
+  const progress = Math.min(scrollY / 300, 1);
   const scale = 1 + (1 - progress) * 6;
   const opacity = 0.9 + (1 - progress) * 0.6;
   const letterSpacing = (1 - progress) * 12;

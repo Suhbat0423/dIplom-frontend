@@ -7,10 +7,10 @@ import { StoreIcon } from "@/assets/icons";
 
 const getMenuItems = (storeId) => [
   { label: "Dashboard", path: `/shop/${storeId}/dashboard` },
-  { label: "Profile", path: `/shop/${storeId}/profile` },
   { label: "Products", path: `/shop/${storeId}/products` },
   { label: "Create Product", path: `/shop/${storeId}/create-product` },
   { label: "Orders", path: `/shop/${storeId}/orders` },
+  { label: "Shop Profile", path: `/shop/${storeId}/shop-profile` },
   { label: "Settings", path: `/shop/${storeId}/settings` },
 ];
 

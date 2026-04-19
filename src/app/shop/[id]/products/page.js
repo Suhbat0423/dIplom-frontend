@@ -1,7 +1,11 @@
 import Link from "next/link";
+import { getProductsByStore } from "@/api";
+import ProductTable from "@/components/shop/ProductTable";
 
 const ProductsPage = async ({ params }) => {
   const { id } = await params;
+  const result = await getProductsByStore(id);
+  const products = Array.isArray(result.data) ? result.data : [];
 
   return (
     <div>
@@ -15,42 +19,15 @@ const ProductsPage = async ({ params }) => {
         </Link>
       </div>
 
-      <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-zinc-50 border-b border-zinc-200">
-            <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-zinc-900">
-                Product Name
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-zinc-900">
-                Price
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-zinc-900">
-                Stock
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-zinc-900">
-                Status
-              </th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-zinc-900">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-b border-zinc-200 hover:bg-zinc-50">
-              <td colSpan="5" className="px-6 py-8 text-center text-zinc-500">
-                No products found.{" "}
-                <Link
-                  href={`/shop/${id}/create-product`}
-                  className="text-blue-600 hover:underline"
-                >
-                  Create one now
-                </Link>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <ProductTable
+        initialProducts={products}
+        storeId={id}
+        loadError={
+          result.success === false
+            ? result.message || "Failed to load products."
+            : ""
+        }
+      />
     </div>
   );
 };

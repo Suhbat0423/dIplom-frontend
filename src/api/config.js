@@ -17,7 +17,8 @@ export const API_ROUTES = {
   },
   product: {
     list: "/products",
-    create: "/products/create",
+    create: "/products",
+    byStore: (storeId) => `/products/store/${storeId}`,
     detail: (productId) => `/products/${productId}`,
   },
 };

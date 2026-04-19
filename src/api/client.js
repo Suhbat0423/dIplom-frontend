@@ -44,10 +44,11 @@ export const apiRequest = async (
   if (!response.ok) {
     return {
       success: false,
+      status: response.status,
       message: data?.message || response.statusText || "Request failed",
       data,
     };
   }
 
-  return { success: true, data };
+  return { success: true, status: response.status, data };
 };

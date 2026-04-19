@@ -9,7 +9,7 @@ const Sidebar = () => {
   const { id } = useParams();
   const pathname = usePathname();
   const router = useRouter();
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
 
   const [storeName, setStoreName] = useState("Store");
   const [loading, setLoading] = useState(true);
@@ -90,7 +90,10 @@ const Sidebar = () => {
 
       {/* Footer */}
       <div className="p-4 border-t border-zinc-700">
-        <button onClick={} className="w-full px-4 py-2 text-sm bg-zinc-700 hover:bg-zinc-600 rounded-lg transition">
+        <button
+          onClick={logout}
+          className="w-full px-4 py-2 text-sm bg-zinc-700 hover:bg-zinc-600 rounded-lg transition"
+        >
           Logout
         </button>
       </div>
