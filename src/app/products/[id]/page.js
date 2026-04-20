@@ -2,6 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProductById, getStoreById } from "@/api";
 import ProductPurchasePanel from "@/components/shop/ProductPurchasePanel";
+import {
+  getProductSizeStock,
+  getTotalSizeStock,
+  normalizeProductSizes,
+} from "@/utils/productSizes";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +43,10 @@ const ProductPage = async ({ params }) => {
   const product = productResult.data;
   const storeResult = product.storeId ? await getStoreById(product.storeId) : null;
   const store = storeResult?.success ? storeResult.data : null;
-  const inStock = Number(product.stock || 0) > 0;
+  const sizes = normalizeProductSizes(product.sizes);
+  const sizeStock = getProductSizeStock(product);
+  const inStock =
+    sizes.length > 0 ? getTotalSizeStock(sizeStock) > 0 : Number(product.stock || 0) > 0;
 
   return (
     <main className="mt-14 bg-white text-zinc-950">
@@ -105,6 +113,22 @@ const ProductPage = async ({ params }) => {
                   "A carefully selected piece for a clean, modern wardrobe."}
               </p>
 
+              {sizes.length > 0 && (
+                <div className="mt-6">
+                  <p className="text-sm font-medium text-zinc-900">Available sizes</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {sizes.map((size) => (
+                      <span
+                        key={size}
+                        className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm font-semibold text-zinc-800"
+                      >
+                        {size}: {sizeStock[size] || 0} left
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="mt-8 grid grid-cols-2 gap-3 border-y border-zinc-200 py-5 text-sm sm:grid-cols-4">
                 <div>
                   <p className="text-zinc-500">Status</p>
@@ -148,4 +172,3 @@ const ProductPage = async ({ params }) => {
 };
 
 export default ProductPage;
-

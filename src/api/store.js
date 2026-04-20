@@ -34,6 +34,13 @@ export const updateStore = (storeId, token, storeData) => {
   });
 };
 
+export const requestStoreVerification = (storeId, token) => {
+  return apiRequest("store", API_ROUTES.store.requestVerification(storeId), {
+    method: "POST",
+    token,
+  });
+};
+
 export const getStores = async () => {
   try {
     const response = await fetch(STORE_LIST_URL, {

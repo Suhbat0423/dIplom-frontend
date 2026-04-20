@@ -29,15 +29,26 @@ export const apiRequest = async (
     throw new Error(`Unknown API service: ${service}`);
   }
 
-  const response = await fetch(`${baseUrl}${path}`, {
-    method,
-    headers: {
-      ...JSON_HEADERS,
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...headers,
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  let response;
+
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      method,
+      headers: {
+        ...JSON_HEADERS,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...headers,
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    return {
+      success: false,
+      status: 0,
+      message: `Cannot connect to ${service} service at ${baseUrl}.`,
+      data: null,
+    };
+  }
 
   const data = await parseResponse(response);
 

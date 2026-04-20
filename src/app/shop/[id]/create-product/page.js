@@ -5,7 +5,14 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import Input from "@/components/ui/Input";
 import { createProduct as createProductAPI } from "@/api";
+import { PRODUCT_SIZES } from "@/config/constants";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  getTotalSizeStock,
+  normalizeProductSizes,
+  normalizeSizeStock,
+  toggleProductSize,
+} from "@/utils/productSizes";
 
 const categories = [
   "T-shirts",
@@ -40,6 +47,8 @@ const CreateProductPage = () => {
     stock: "",
     stockQuality: "",
     imageUrl: "",
+    sizes: [],
+    sizeStock: {},
   });
   const [images, setImages] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -87,6 +96,30 @@ const CreateProductPage = () => {
     );
   };
 
+  const handleSizeToggle = (size) => {
+    setFormData((currentData) => {
+      const nextSizes = toggleProductSize(currentData.sizes, size);
+
+      return {
+        ...currentData,
+        sizes: nextSizes,
+        sizeStock: normalizeSizeStock(currentData.sizeStock, nextSizes),
+      };
+    });
+    setError("");
+  };
+
+  const handleSizeStockChange = (size, value) => {
+    setFormData((currentData) => ({
+      ...currentData,
+      sizeStock: {
+        ...currentData.sizeStock,
+        [size]: value,
+      },
+    }));
+    setError("");
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
@@ -112,13 +145,27 @@ const CreateProductPage = () => {
       return;
     }
 
-    if (!formData.stock || parseInt(formData.stock) < 0) {
-      setError("Stock cannot be negative");
+    if (!formData.stockQuality) {
+      setError("Please select a stock quality");
       return;
     }
 
-    if (!formData.stockQuality) {
-      setError("Please select a stock quality");
+    const selectedSizes = normalizeProductSizes(formData.sizes);
+    const sizeStock = normalizeSizeStock(formData.sizeStock, selectedSizes);
+    const totalSizeStock = getTotalSizeStock(sizeStock);
+
+    if (selectedSizes.length !== formData.sizes.length) {
+      setError("One or more selected sizes are not supported");
+      return;
+    }
+
+    if (selectedSizes.length > 0 && totalSizeStock <= 0) {
+      setError("Add stock quantity for at least one selected size");
+      return;
+    }
+
+    if (selectedSizes.length === 0 && (!formData.stock || parseInt(formData.stock) < 0)) {
+      setError("Stock cannot be negative");
       return;
     }
 
@@ -133,7 +180,9 @@ const CreateProductPage = () => {
       name: formData.name.trim(),
       description: formData.description.trim(),
       price: parseFloat(formData.price),
-      stock: parseInt(formData.stock),
+      stock: selectedSizes.length > 0 ? totalSizeStock : parseInt(formData.stock),
+      sizes: selectedSizes,
+      sizeStock,
       metadata: {
         category: formData.category,
         priceCategory: formData.priceCategory,
@@ -280,8 +329,13 @@ const CreateProductPage = () => {
               name="stock"
               placeholder="0"
               min="0"
-              value={formData.stock}
+              value={
+                formData.sizes.length > 0
+                  ? String(getTotalSizeStock(normalizeSizeStock(formData.sizeStock, formData.sizes)))
+                  : formData.stock
+              }
               onChange={handleChange}
+              disabled={formData.sizes.length > 0}
               required
             />
 
@@ -303,6 +357,67 @@ const CreateProductPage = () => {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <div className="mb-3 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-zinc-700">Available sizes</p>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Select every size customers can buy.
+                  </p>
+                </div>
+                {formData.sizes.length > 0 && (
+                  <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600">
+                    {formData.sizes.length} selected
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-9">
+                {PRODUCT_SIZES.map((size) => {
+                  const selected = formData.sizes.includes(size);
+
+                  return (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => handleSizeToggle(size)}
+                      aria-pressed={selected}
+                      className={`h-12 rounded-lg border text-sm font-semibold transition ${
+                        selected
+                          ? "border-zinc-950 bg-zinc-950 text-white shadow-sm"
+                          : "border-zinc-300 bg-white text-zinc-900 hover:border-zinc-950"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
+              </div>
+              {formData.sizes.length > 0 && (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {formData.sizes.map((size) => (
+                    <label
+                      key={size}
+                      className="rounded-lg border border-zinc-200 bg-zinc-50 p-3"
+                    >
+                      <span className="text-sm font-semibold text-zinc-900">
+                        {size} stock
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.sizeStock[size] ?? ""}
+                        onChange={(event) =>
+                          handleSizeStockChange(size, event.target.value)
+                        }
+                        placeholder="0"
+                        className="mt-2 h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-black"
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </section>

@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProductsByStore, getStoreById } from "@/api";
+import {
+  getProductSizeStock,
+  getTotalSizeStock,
+  normalizeProductSizes,
+} from "@/utils/productSizes";
 
 export const dynamic = "force-dynamic";
 
@@ -131,39 +136,60 @@ const BrandDetailPage = async ({ params }) => {
 
         <div className="mt-8 grid grid-cols-1 gap-x-5 gap-y-9 sm:grid-cols-2 xl:grid-cols-4">
           {products.length > 0 ? (
-            products.map((product, index) => (
-              <article key={product._id || product.id} className="group">
-                <Link
-                  href={`/products/${product._id || product.id}`}
-                  className="relative block aspect-[4/5] overflow-hidden bg-zinc-100"
-                >
-                  <img
-                    src={getProductImage(product, index)}
-                    alt={product.name}
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                  />
-                  <span className="absolute left-3 top-3 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-900">
-                    {product.stock > 0 ? "Available" : "Sold out"}
-                  </span>
-                </Link>
-                <div className="mt-4 flex items-start justify-between gap-3">
-                  <div>
+            products.map((product, index) => {
+                const sizes = normalizeProductSizes(product.sizes);
+                const sizeStock = getProductSizeStock(product);
+                const inStock =
+                  sizes.length > 0
+                    ? getTotalSizeStock(sizeStock) > 0
+                    : Number(product.stock || 0) > 0;
+
+                return (
+                  <article key={product._id || product.id} className="group">
                     <Link
                       href={`/products/${product._id || product.id}`}
-                      className="font-medium transition hover:text-zinc-500"
+                      className="relative block aspect-[4/5] overflow-hidden bg-zinc-100"
                     >
-                      {product.name}
+                      <img
+                        src={getProductImage(product, index)}
+                        alt={product.name}
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      />
+                      <span className="absolute left-3 top-3 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-900">
+                        {inStock ? "Available" : "Sold out"}
+                      </span>
                     </Link>
-                    <p className="mt-1 text-sm text-zinc-500">
-                      {product.description || "Signature piece"}
-                    </p>
-                  </div>
-                  <p className="text-sm font-semibold">
-                    {formatCurrency(product.price)}
-                  </p>
-                </div>
-              </article>
-            ))
+                    <div className="mt-4 flex items-start justify-between gap-3">
+                      <div>
+                        <Link
+                          href={`/products/${product._id || product.id}`}
+                          className="font-medium transition hover:text-zinc-500"
+                        >
+                          {product.name}
+                        </Link>
+                        <p className="mt-1 text-sm text-zinc-500">
+                          {product.description || "Signature piece"}
+                        </p>
+                        {sizes.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-1.5">
+                            {sizes.map((size) => (
+                              <span
+                                key={size}
+                                className="rounded-full bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700"
+                              >
+                                {size}: {sizeStock[size] || 0}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm font-semibold">
+                        {formatCurrency(product.price)}
+                      </p>
+                    </div>
+                  </article>
+                );
+              })
           ) : (
             <div className="col-span-full border border-zinc-200 p-8 text-zinc-600">
               This brand has not added products yet.

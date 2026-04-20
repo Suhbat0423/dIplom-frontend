@@ -3,11 +3,19 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { updateProduct } from "@/api";
+import { PRODUCT_SIZES } from "@/config/constants";
 import { useAuth } from "@/hooks/useAuth";
 import {
   uploadProductImage,
   validateProductImage,
 } from "@/utils/productImages";
+import {
+  getProductSizeStock,
+  getTotalSizeStock,
+  normalizeProductSizes,
+  normalizeSizeStock,
+  toggleProductSize,
+} from "@/utils/productSizes";
 
 const categories = [
   "T-shirts",
@@ -33,6 +41,8 @@ const emptyProduct = {
   category: "",
   priceCategory: "",
   stockQuality: "",
+  sizes: [],
+  sizeStock: {},
 };
 
 const normalizeProduct = (product) => ({
@@ -45,6 +55,8 @@ const normalizeProduct = (product) => ({
   category: product?.metadata?.category || "",
   priceCategory: product?.metadata?.priceCategory || "",
   stockQuality: product?.metadata?.stockQuality || "",
+  sizes: normalizeProductSizes(product?.sizes),
+  sizeStock: getProductSizeStock(product),
 });
 
 const selectFields = [
@@ -94,11 +106,44 @@ const ProductEditForm = ({ product, storeId }) => {
     setStatus({ loading: false, error: "", success: "" });
   };
 
+  const handleSizeToggle = (size) => {
+    setForm((current) => {
+      const nextSizes = toggleProductSize(current.sizes, size);
+
+      return {
+        ...current,
+        sizes: nextSizes,
+        sizeStock: normalizeSizeStock(current.sizeStock, nextSizes),
+      };
+    });
+    setStatus((current) => ({ ...current, error: "", success: "" }));
+  };
+
+  const handleSizeStockChange = (size, value) => {
+    setForm((current) => ({
+      ...current,
+      sizeStock: {
+        ...current.sizeStock,
+        [size]: value,
+      },
+    }));
+    setStatus((current) => ({ ...current, error: "", success: "" }));
+  };
+
   const validateForm = () => {
     if (!form.name.trim()) return "Product name is required.";
     if (!form.price || Number(form.price) < 0) return "Price must be 0 or greater.";
-    if (form.stock === "" || Number(form.stock) < 0) {
+    if (form.sizes.length === 0 && (form.stock === "" || Number(form.stock) < 0)) {
       return "Stock must be 0 or greater.";
+    }
+    if (normalizeProductSizes(form.sizes).length !== form.sizes.length) {
+      return "One or more selected sizes are not supported.";
+    }
+    if (
+      form.sizes.length > 0 &&
+      getTotalSizeStock(normalizeSizeStock(form.sizeStock, form.sizes)) <= 0
+    ) {
+      return "Add stock quantity for at least one selected size.";
     }
     return "";
   };
@@ -120,12 +165,17 @@ const ProductEditForm = ({ product, storeId }) => {
       const imageUrl = imageFile
         ? await uploadProductImage(imageFile)
         : form.imageUrl.trim();
+      const selectedSizes = normalizeProductSizes(form.sizes);
+      const sizeStock = normalizeSizeStock(form.sizeStock, selectedSizes);
+      const totalSizeStock = getTotalSizeStock(sizeStock);
 
       const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
         price: Number(form.price),
-        stock: Number(form.stock),
+        stock: selectedSizes.length > 0 ? totalSizeStock : Number(form.stock),
+        sizes: selectedSizes,
+        sizeStock,
         imageUrl,
         metadata: {
           ...(product.metadata || {}),
@@ -232,8 +282,13 @@ const ProductEditForm = ({ product, storeId }) => {
                 name="stock"
                 type="number"
                 min="0"
-                value={form.stock}
+                value={
+                  form.sizes.length > 0
+                    ? String(getTotalSizeStock(normalizeSizeStock(form.sizeStock, form.sizes)))
+                    : form.stock
+                }
                 onChange={updateField}
+                disabled={form.sizes.length > 0}
                 className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-950 outline-none transition focus:border-zinc-900 focus:ring-4 focus:ring-zinc-100"
               />
             </div>
@@ -262,6 +317,67 @@ const ProductEditForm = ({ product, storeId }) => {
                 </select>
               </div>
             ))}
+          </div>
+
+          <div className="mt-5">
+            <div className="mb-3 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-zinc-800">Available sizes</p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Select every size customers can buy.
+                </p>
+              </div>
+              {form.sizes.length > 0 && (
+                <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600">
+                  {form.sizes.length} selected
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-9">
+              {PRODUCT_SIZES.map((size) => {
+                const selected = form.sizes.includes(size);
+
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => handleSizeToggle(size)}
+                    aria-pressed={selected}
+                    className={`h-12 rounded-lg border text-sm font-semibold transition ${
+                      selected
+                        ? "border-zinc-950 bg-zinc-950 text-white shadow-sm"
+                        : "border-zinc-300 bg-white text-zinc-900 hover:border-zinc-950"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                );
+              })}
+            </div>
+            {form.sizes.length > 0 && (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {form.sizes.map((size) => (
+                  <label
+                    key={size}
+                    className="rounded-lg border border-zinc-200 bg-zinc-50 p-3"
+                  >
+                    <span className="text-sm font-semibold text-zinc-900">
+                      {size} stock
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.sizeStock[size] ?? ""}
+                      onChange={(event) =>
+                        handleSizeStockChange(size, event.target.value)
+                      }
+                      placeholder="0"
+                      className="mt-2 h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-900 focus:ring-4 focus:ring-zinc-100"
+                    />
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="mt-5">

@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { deleteProduct } from "@/api";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  getProductSizeStock,
+  getTotalSizeStock,
+  normalizeProductSizes,
+} from "@/utils/productSizes";
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat("en-US", {
@@ -74,6 +79,9 @@ const ProductTable = ({ initialProducts = [], storeId, loadError }) => {
                 Stock
               </th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-zinc-900">
+                Sizes
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-zinc-900">
                 Status
               </th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-zinc-900">
@@ -86,6 +94,12 @@ const ProductTable = ({ initialProducts = [], storeId, loadError }) => {
               products.map((product) => {
                 const productId = getProductId(product);
                 const stock = product.stock ?? 0;
+                const sizes = normalizeProductSizes(product.sizes);
+                const sizeStock = getProductSizeStock(product);
+                const inStock =
+                  sizes.length > 0
+                    ? getTotalSizeStock(sizeStock) > 0
+                    : Number(stock || 0) > 0;
                 const isPending = pendingId === productId;
                 const isMenuOpen = openMenuId === productId;
 
@@ -104,7 +118,21 @@ const ProductTable = ({ initialProducts = [], storeId, loadError }) => {
                       {stock}
                     </td>
                     <td className="px-6 py-4 text-sm text-zinc-700">
-                      {stock > 0 ? "In stock" : "Out of stock"}
+                      {sizes.length > 0 && (
+                        <div className="flex max-w-xs flex-wrap gap-1.5">
+                          {sizes.map((size) => (
+                            <span
+                              key={size}
+                              className="rounded-full bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700"
+                            >
+                              {size}: {sizeStock[size] || 0}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-zinc-700">
+                      {inStock ? "In stock" : "Out of stock"}
                     </td>
                     <td className="relative px-6 py-4 text-right text-sm">
                       <button
@@ -146,7 +174,7 @@ const ProductTable = ({ initialProducts = [], storeId, loadError }) => {
               })
             ) : (
               <tr className="border-b border-zinc-200 hover:bg-zinc-50">
-                <td colSpan="5" className="px-6 py-8 text-center text-zinc-500">
+                <td colSpan="6" className="px-6 py-8 text-center text-zinc-500">
                   {loadError || "No products found."}{" "}
                   <Link
                     href={`/shop/${storeId}/create-product`}
