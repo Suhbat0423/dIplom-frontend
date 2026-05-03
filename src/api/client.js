@@ -1,4 +1,4 @@
-import { API_BASE_URLS } from "@/api/config";
+import { API_BASE_URL } from "@/api/config";
 
 const JSON_HEADERS = {
   "Content-Type": "application/json",
@@ -19,20 +19,13 @@ const parseResponse = async (response) => {
 };
 
 export const apiRequest = async (
-  service,
   path,
   { method = "GET", body, token, headers = {} } = {},
 ) => {
-  const baseUrl = API_BASE_URLS[service];
-
-  if (!baseUrl) {
-    throw new Error(`Unknown API service: ${service}`);
-  }
-
   let response;
 
   try {
-    response = await fetch(`${baseUrl}${path}`, {
+    response = await fetch(`${API_BASE_URL}${path}`, {
       method,
       headers: {
         ...JSON_HEADERS,
@@ -45,7 +38,7 @@ export const apiRequest = async (
     return {
       success: false,
       status: 0,
-      message: `Cannot connect to ${service} service at ${baseUrl}.`,
+      message: `Cannot connect to API gateway at ${API_BASE_URL}.`,
       data: null,
     };
   }

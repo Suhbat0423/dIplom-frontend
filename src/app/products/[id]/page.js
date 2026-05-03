@@ -64,13 +64,13 @@ const ProductPage = async ({ params }) => {
         <div className="flex flex-col justify-between px-5 py-8 sm:px-8 lg:px-12">
           <div>
             <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-500">
-              <Link href="/shops" className="transition hover:text-zinc-950">
-                Shops
+              <Link href="/brands" className="transition hover:text-zinc-950">
+                Brands
               </Link>
               <span>/</span>
               {store ? (
                 <Link
-                  href={`/shops/${store._id || store.id}`}
+                  href={`/brands/${store._id || store.id}`}
                   className="transition hover:text-zinc-950"
                 >
                   {store.name}

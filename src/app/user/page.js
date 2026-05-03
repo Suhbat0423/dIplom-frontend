@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 import { loginUser } from "@/api";
 import Input from "@/components/ui/Input";
 import UserAuthShell from "@/components/user/UserAuthShell";
+import { AUTH_ROLES } from "@/config/constants";
 import { useAuth } from "@/hooks/useAuth";
-import { setStorageItem } from "@/utils/storage";
-import { STORAGE_KEYS } from "@/config/constants";
+import { getPostLoginRedirect, sanitizeNextPath } from "@/utils/auth";
+import { useEffect } from "react";
 
 const UserLoginPage = () => {
   const router = useRouter();
@@ -18,6 +19,12 @@ const UserLoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!auth.loading && auth.isAuthenticated) {
+      router.replace(getPostLoginRedirect(auth.session));
+    }
+  }, [auth.isAuthenticated, auth.loading, auth.session, router]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -38,20 +45,23 @@ const UserLoginPage = () => {
     }
 
     const token = result.data?.token;
-    if (token) {
-      auth.login(token);
-    }
-
-    if (result.data?.user && typeof window !== "undefined") {
-      setStorageItem(STORAGE_KEYS.USER, JSON.stringify(result.data.user));
-    }
 
     const nextUrl =
       typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search).get("next")
+        ? sanitizeNextPath(new URLSearchParams(window.location.search).get("next"))
         : "";
 
-    router.push(nextUrl || "/shops");
+    try {
+      const session = auth.login({
+        token,
+        expectedRole: AUTH_ROLES.USER,
+        data: result.data,
+      });
+
+      router.push(getPostLoginRedirect(session, nextUrl));
+    } catch (loginError) {
+      setError(loginError.message || "Unable to sign in.");
+    }
   };
 
   return (

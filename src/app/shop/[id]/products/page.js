@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { getProductsByStore } from "@/api";
+import { getProductList } from "@/api/product";
 import ProductTable from "@/components/shop/ProductTable";
 
 const ProductsPage = async ({ params }) => {
   const { id } = await params;
   const result = await getProductsByStore(id);
-  const products = Array.isArray(result.data) ? result.data : [];
+  const products = getProductList(result.data);
 
   return (
     <div>

@@ -1,15 +1,37 @@
-import { useSyncExternalStore } from "react";
-import { STORAGE_KEYS } from "@/config/constants";
+import { useCallback, useSyncExternalStore } from "react";
+import { AUTH_ROLES } from "@/config/constants";
 import {
-  getStorageItem,
-  removeStorageItem,
-  setStorageItem,
-} from "@/utils/storage";
+  clearAuthStorage,
+  createAuthSession,
+  getStoredAuthSession,
+  persistAuthSession,
+} from "@/utils/auth";
 
 const AUTH_STORAGE_EVENT = "auth-storage";
+let cachedSession = null;
 
-const getTokenSnapshot = () => {
-  return getStorageItem(STORAGE_KEYS.TOKEN) || null;
+const isSameSession = (left, right) => {
+  if (left === right) return true;
+  if (!left || !right) return false;
+
+  return (
+    left.token === right.token &&
+    left.role === right.role &&
+    left.storeId === right.storeId &&
+    left.subjectId === right.subjectId &&
+    left.expiresAt === right.expiresAt
+  );
+};
+
+const getSessionSnapshot = () => {
+  const nextSession = getStoredAuthSession();
+
+  if (isSameSession(cachedSession, nextSession)) {
+    return cachedSession;
+  }
+
+  cachedSession = nextSession;
+  return cachedSession;
 };
 
 const getServerSnapshot = () => null;
@@ -29,27 +51,47 @@ const emitAuthStorageChange = () => {
 };
 
 export const useAuth = () => {
-  const token = useSyncExternalStore(
+  const session = useSyncExternalStore(
     subscribeToAuthStorage,
-    getTokenSnapshot,
+    getSessionSnapshot,
     getServerSnapshot,
   );
 
-  const login = (authToken) => {
-    if (typeof window !== "undefined") {
-      setStorageItem(STORAGE_KEYS.TOKEN, authToken);
-      emitAuthStorageChange();
-    }
+  const login = useCallback(({ token, expectedRole, data }) => {
+    const nextSession = createAuthSession({ token, expectedRole, data });
+
+    persistAuthSession(nextSession);
+    cachedSession = nextSession;
+    emitAuthStorageChange();
+
+    return nextSession;
+  }, []);
+
+  const logout = useCallback((role = null) => {
+    clearAuthStorage(role);
+    cachedSession = null;
+    emitAuthStorageChange();
+  }, []);
+
+  const token = session?.token || null;
+  const role = session?.role || null;
+  const user = session?.user || null;
+  const store = session?.store || null;
+  const storeId = session?.storeId || null;
+  const isAuthenticated = Boolean(token);
+
+  return {
+    session,
+    token,
+    role,
+    user,
+    store,
+    storeId,
+    loading: false,
+    login,
+    logout,
+    isAuthenticated,
+    isUser: role === AUTH_ROLES.USER,
+    isShop: role === AUTH_ROLES.SHOP,
   };
-
-  const logout = () => {
-    if (typeof window !== "undefined") {
-      removeStorageItem(STORAGE_KEYS.TOKEN);
-      emitAuthStorageChange();
-    }
-  };
-
-  const isAuthenticated = !!token;
-
-  return { token, loading: false, login, logout, isAuthenticated };
 };

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createOrder, getCart } from "@/api";
-import { useAuth } from "@/hooks/useAuth";
+import { AUTH_ROLES } from "@/config/constants";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import {
   DELIVERY_FEE,
   TAX,
@@ -37,7 +38,8 @@ const emptyAddress = {
 
 const CheckoutPage = () => {
   const router = useRouter();
-  const { token, loading: authLoading } = useAuth();
+  const auth = useRequireAuth({ requiredRole: AUTH_ROLES.USER });
+  const { token, loading: authLoading, isAuthorized, logout } = auth;
   const [items, setItems] = useState([]);
   const [shippingAddress, setShippingAddress] = useState(emptyAddress);
   const [notes, setNotes] = useState("");
@@ -70,6 +72,11 @@ const CheckoutPage = () => {
       if (ignore) return;
 
       if (!result.success) {
+        if (result.status === 401 || result.status === 403) {
+          logout();
+          return;
+        }
+
         setError(result.message || "Failed to load cart.");
         setItems([]);
         setLoading(false);
@@ -85,7 +92,7 @@ const CheckoutPage = () => {
     return () => {
       ignore = true;
     };
-  }, [authLoading, token]);
+  }, [authLoading, logout, token]);
 
   const updateAddress = (event) => {
     const { name, value } = event.target;
@@ -134,6 +141,11 @@ const CheckoutPage = () => {
     setPlacing(false);
 
     if (!result.success) {
+      if (result.status === 401 || result.status === 403) {
+        logout();
+        return;
+      }
+
       setError(result.message || "Failed to place order.");
       return;
     }
@@ -147,18 +159,11 @@ const CheckoutPage = () => {
     }, 700);
   };
 
-  if (!authLoading && !token) {
+  if (authLoading || !isAuthorized) {
     return (
       <main className="mt-14 min-h-screen bg-zinc-50 px-5 py-12 text-zinc-950 sm:px-8 lg:px-10">
         <section className="mx-auto max-w-3xl rounded-lg border border-zinc-200 bg-white p-8 text-center shadow-sm">
-          <h1 className="text-4xl font-semibold tracking-tight">Sign in to checkout</h1>
-          <p className="mt-3 text-sm text-zinc-500">Checkout requires an authenticated cart.</p>
-          <Link
-            href="/user?next=/checkout"
-            className="mt-6 inline-flex rounded-lg bg-zinc-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
-          >
-            Sign in
-          </Link>
+          <p className="text-sm text-zinc-500">Checking your session...</p>
         </section>
       </main>
     );

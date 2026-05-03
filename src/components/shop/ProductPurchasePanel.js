@@ -11,7 +11,7 @@ import {
 } from "@/utils/productSizes";
 
 const ProductPurchasePanel = ({ product }) => {
-  const { token } = useAuth();
+  const { token, role, isShop } = useAuth();
   const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState("");
@@ -58,6 +58,11 @@ const ProductPurchasePanel = ({ product }) => {
 
     if (!token) {
       setMessage("Sign in before adding this product to your cart.");
+      return;
+    }
+
+    if (role !== "user") {
+      setMessage("Shop accounts cannot buy products or use the customer cart.");
       return;
     }
 
@@ -163,14 +168,14 @@ const ProductPurchasePanel = ({ product }) => {
 
       {message && (
         <div
-          className={`rounded-lg border px-4 py-3 text-sm ${
+        className={`rounded-lg border px-4 py-3 text-sm ${
             message.includes("added")
               ? "border-emerald-200 bg-emerald-50 text-emerald-700"
               : "border-red-200 bg-red-50 text-red-700"
           }`}
         >
           {message}{" "}
-          {message.includes("added") && (
+          {message.includes("added") && !isShop && (
             <Link href="/cart" className="font-semibold underline underline-offset-4">
               View cart
             </Link>

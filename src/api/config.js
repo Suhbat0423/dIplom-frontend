@@ -1,13 +1,9 @@
-export const API_BASE_URLS = {
-  user: process.env.NEXT_PUBLIC_USER_API_URL || "http://localhost:3001",
-  product: process.env.NEXT_PUBLIC_PRODUCT_API_URL || "http://localhost:3002",
-  store: process.env.NEXT_PUBLIC_STORE_API_URL || "http://localhost:3003",
-  cart: process.env.NEXT_PUBLIC_CART_API_URL || "http://localhost:3004",
-  order: process.env.NEXT_PUBLIC_ORDER_API_URL || "http://localhost:3005",
-};
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api";
 
 export const API_ROUTES = {
   store: {
+    list: "/stores",
     login: "/stores/auth/login",
     register: "/stores/auth/register",
     detail: (storeId) => `/stores/${storeId}`,
@@ -35,5 +31,12 @@ export const API_ROUTES = {
     detail: (orderId) => `/orders/${orderId}`,
     byStore: (storeId) => `/orders/store/${storeId}`,
     status: (orderId) => `/orders/${orderId}/status`,
+  },
+  payment: {
+    list: "/payments",
+    byOrder: (orderId) => `/payments/order/${orderId}`,
+    confirm: (paymentId) => `/payments/${paymentId}/confirm`,
+    fail: (paymentId) => `/payments/${paymentId}/fail`,
+    refund: (paymentId) => `/payments/${paymentId}/refund`,
   },
 };

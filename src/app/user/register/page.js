@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginUser, registerUser } from "@/api";
 import Input from "@/components/ui/Input";
 import UserAuthShell from "@/components/user/UserAuthShell";
-import { STORAGE_KEYS } from "@/config/constants";
+import { AUTH_ROLES } from "@/config/constants";
 import { useAuth } from "@/hooks/useAuth";
-import { setStorageItem } from "@/utils/storage";
+import { getPostLoginRedirect } from "@/utils/auth";
 
 const UserRegisterPage = () => {
   const router = useRouter();
@@ -20,6 +20,12 @@ const UserRegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!auth.loading && auth.isAuthenticated) {
+      router.replace(getPostLoginRedirect(auth.session));
+    }
+  }, [auth.isAuthenticated, auth.loading, auth.session, router]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -58,15 +64,18 @@ const UserRegisterPage = () => {
     }
 
     const token = loginResult.data?.token;
-    if (token) {
-      auth.login(token);
-    }
 
-    if (loginResult.data?.user && typeof window !== "undefined") {
-      setStorageItem(STORAGE_KEYS.USER, JSON.stringify(loginResult.data.user));
-    }
+    try {
+      const session = auth.login({
+        token,
+        expectedRole: AUTH_ROLES.USER,
+        data: loginResult.data,
+      });
 
-    router.push("/shops");
+      router.push(getPostLoginRedirect(session));
+    } catch (loginError) {
+      setError(loginError.message || "Unable to sign in after registration.");
+    }
   };
 
   return (

@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginStore } from "@/api";
 import AuthPageShell from "@/components/shop/AuthPageShell";
 import Input from "@/components/ui/Input";
+import { AUTH_ROLES } from "@/config/constants";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  getPostLoginRedirect,
+  getShopDashboardPath,
+  sanitizeNextPath,
+} from "@/utils/auth";
 
 const Shop = () => {
   const router = useRouter();
@@ -14,6 +20,20 @@ const Shop = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    if (auth.loading || !auth.isAuthenticated) {
+      return;
+    }
+
+    if (auth.isShop) {
+      const dashboardPath = getShopDashboardPath(auth.session);
+
+      if (dashboardPath) {
+        router.replace(dashboardPath);
+      }
+    }
+  }, [auth.isAuthenticated, auth.isShop, auth.loading, auth.session, router]);
 
   return (
     <AuthPageShell
@@ -76,17 +96,22 @@ const Shop = () => {
           }
 
           const token = result.data?.token;
-          if (token) {
-            auth.login(token);
-          }
+          const nextUrl =
+            typeof window !== "undefined"
+              ? sanitizeNextPath(new URLSearchParams(window.location.search).get("next"))
+              : "";
 
-          const storeId = result.data?.store?._id || result.data?.store?.id;
-          if (storeId) {
-            router.push(`/shop/${storeId}`);
-            return;
-          }
+          try {
+            const session = auth.login({
+              token,
+              expectedRole: AUTH_ROLES.SHOP,
+              data: result.data,
+            });
 
-          router.push("/admin");
+            router.push(getPostLoginRedirect(session, nextUrl));
+          } catch (loginError) {
+            setErrorMessage(loginError.message || "Unable to sign in.");
+          }
         }}
         className="rounded-lg bg-black py-3 text-sm font-medium tracking-wide text-white transition hover:bg-zinc-800"
       >

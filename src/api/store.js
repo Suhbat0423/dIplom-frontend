@@ -1,33 +1,40 @@
 import { apiRequest } from "@/api/client";
 import { API_ROUTES } from "@/api/config";
 
-const STORE_LIST_URL =
-  process.env.STORE_LIST_URL || "http://0.0.0.0:3003/stores";
+export const getStoreList = (data) => {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.stores)) return data.stores;
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.data?.stores)) return data.data.stores;
+  if (Array.isArray(data?.data?.items)) return data.data.items;
+  return [];
+};
 
 export const loginStore = (email, password) => {
-  return apiRequest("store", API_ROUTES.store.login, {
+  return apiRequest(API_ROUTES.store.login, {
     method: "POST",
     body: { email, password },
   });
 };
 
 export const registerStore = (name, email, password) => {
-  return apiRequest("store", API_ROUTES.store.register, {
+  return apiRequest(API_ROUTES.store.register, {
     method: "POST",
     body: { name, email, password },
   });
 };
 
 export const getStoreInfo = (storeId, token) => {
-  return apiRequest("store", API_ROUTES.store.detail(storeId), { token });
+  return apiRequest(API_ROUTES.store.detail(storeId), { token });
 };
 
 export const getStoreById = (storeId) => {
-  return apiRequest("store", API_ROUTES.store.detail(storeId));
+  return apiRequest(API_ROUTES.store.detail(storeId));
 };
 
 export const updateStore = (storeId, token, storeData) => {
-  return apiRequest("store", API_ROUTES.store.detail(storeId), {
+  return apiRequest(API_ROUTES.store.detail(storeId), {
     method: "PUT",
     token,
     body: storeData,
@@ -35,39 +42,12 @@ export const updateStore = (storeId, token, storeData) => {
 };
 
 export const requestStoreVerification = (storeId, token) => {
-  return apiRequest("store", API_ROUTES.store.requestVerification(storeId), {
+  return apiRequest(API_ROUTES.store.requestVerification(storeId), {
     method: "POST",
     token,
   });
 };
 
-export const getStores = async () => {
-  try {
-    const response = await fetch(STORE_LIST_URL, {
-      method: "GET",
-      cache: "no-store",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return {
-        success: false,
-        status: response.status,
-        message: data?.message || "Failed to fetch stores",
-        data,
-      };
-    }
-
-    return { success: true, status: response.status, data };
-  } catch (error) {
-    return {
-      success: false,
-      message: error?.message || "Failed to fetch stores",
-      data: [],
-    };
-  }
+export const getStores = () => {
+  return apiRequest(API_ROUTES.store.list);
 };

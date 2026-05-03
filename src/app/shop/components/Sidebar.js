@@ -41,7 +41,7 @@ const Sidebar = () => {
   }, [token]);
 
   const menuItems = [
-    { label: "Dashboard", path: `/shop/${id}/dashboard` },
+    { label: "Dashboard", path: `/shop/${id}` },
     { label: "Profile", path: `/shop/${id}/profile` },
     { label: "Products", path: `/shop/${id}/products` },
     { label: "Create Product", path: `/shop/${id}/create-product` },

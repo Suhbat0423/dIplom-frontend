@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { clearCart, deleteCartItem, getCart, updateCartItem } from "@/api";
-import { useAuth } from "@/hooks/useAuth";
+import { AUTH_ROLES } from "@/config/constants";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { hasMissingRequiredSize } from "@/utils/orderDisplay";
 
 const fallbackImage =
@@ -43,7 +44,8 @@ const normalizeCartItems = (data) => {
 };
 
 const CartPage = () => {
-  const { token, loading: authLoading } = useAuth();
+  const auth = useRequireAuth({ requiredRole: AUTH_ROLES.USER });
+  const { token, loading: authLoading, isAuthorized, logout } = auth;
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pendingAction, setPendingAction] = useState("");
@@ -87,6 +89,11 @@ const CartPage = () => {
       if (ignore) return;
 
       if (!result.success) {
+        if (result.status === 401 || result.status === 403) {
+          logout();
+          return;
+        }
+
         setMessage(result.message || "Failed to load your cart.");
         setItems([]);
         setLoading(false);
@@ -102,7 +109,7 @@ const CartPage = () => {
     return () => {
       ignore = true;
     };
-  }, [authLoading, token]);
+  }, [authLoading, logout, token]);
 
   const changeQuantity = async (item, nextQuantity) => {
     const itemId = getItemId(item);
@@ -115,6 +122,11 @@ const CartPage = () => {
     const result = await updateCartItem(token, itemId, nextQuantity);
 
     if (!result.success) {
+      if (result.status === 401 || result.status === 403) {
+        logout();
+        return;
+      }
+
       setMessage(result.message || "Failed to update item quantity.");
       setPendingAction("");
       return;
@@ -141,6 +153,11 @@ const CartPage = () => {
     const result = await deleteCartItem(token, itemId);
 
     if (!result.success) {
+      if (result.status === 401 || result.status === 403) {
+        logout();
+        return;
+      }
+
       setMessage(result.message || "Failed to remove this item.");
       setPendingAction("");
       return;
@@ -157,6 +174,11 @@ const CartPage = () => {
     const result = await clearCart(token);
 
     if (!result.success) {
+      if (result.status === 401 || result.status === 403) {
+        logout();
+        return;
+      }
+
       setMessage(result.message || "Failed to clear your cart.");
       setPendingAction("");
       return;
@@ -167,21 +189,11 @@ const CartPage = () => {
     setMessage("Cart cleared.");
   };
 
-  if (!authLoading && !token) {
+  if (authLoading || !isAuthorized) {
     return (
       <main className="mt-14 min-h-screen bg-zinc-50 px-5 py-12 text-zinc-950 sm:px-8 lg:px-10">
         <section className="mx-auto max-w-3xl rounded-lg border border-zinc-200 bg-white p-8 text-center shadow-sm">
-          <p className="text-sm uppercase tracking-[0.24em] text-zinc-500">Cart</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight">Sign in to view your cart</h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-zinc-500">
-            Your cart is saved to your account and requires an authenticated session.
-          </p>
-          <Link
-            href="/user?next=/cart"
-            className="mt-6 inline-flex rounded-lg bg-zinc-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
-          >
-            Sign in
-          </Link>
+          <p className="text-sm text-zinc-500">Checking your session...</p>
         </section>
       </main>
     );

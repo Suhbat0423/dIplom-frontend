@@ -6,7 +6,7 @@ import { useStoreInfo } from "@/hooks/useStoreInfo";
 import { StoreIcon } from "@/assets/icons";
 
 const getMenuItems = (storeId) => [
-  { label: "Dashboard", path: `/shop/${storeId}/dashboard` },
+  { label: "Dashboard", path: `/shop/${storeId}` },
   { label: "Products", path: `/shop/${storeId}/products` },
   { label: "Create Product", path: `/shop/${storeId}/create-product` },
   { label: "Orders", path: `/shop/${storeId}/orders` },

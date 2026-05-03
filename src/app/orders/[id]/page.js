@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getOrderById } from "@/api";
-import { useAuth } from "@/hooks/useAuth";
+import PaymentSection from "@/components/payment/PaymentSection";
+import { AUTH_ROLES } from "@/config/constants";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import {
   formatCurrency,
   formatDate,
@@ -17,7 +19,8 @@ import {
 
 const OrderDetailPage = () => {
   const { id } = useParams();
-  const { token, loading: authLoading } = useAuth();
+  const auth = useRequireAuth({ requiredRole: AUTH_ROLES.USER });
+  const { token, loading: authLoading, isAuthorized, logout } = auth;
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -43,6 +46,11 @@ const OrderDetailPage = () => {
       if (ignore) return;
 
       if (!result.success) {
+        if (result.status === 401 || result.status === 403) {
+          logout();
+          return;
+        }
+
         setError(result.message || "Failed to load order.");
         setOrder(null);
         setLoading(false);
@@ -58,19 +66,13 @@ const OrderDetailPage = () => {
     return () => {
       ignore = true;
     };
-  }, [authLoading, id, token]);
+  }, [authLoading, id, logout, token]);
 
-  if (!authLoading && !token) {
+  if (authLoading || !isAuthorized) {
     return (
       <main className="mt-14 min-h-screen bg-zinc-50 px-5 py-12 text-zinc-950 sm:px-8 lg:px-10">
         <section className="mx-auto max-w-3xl rounded-lg border border-zinc-200 bg-white p-8 text-center shadow-sm">
-          <h1 className="text-4xl font-semibold tracking-tight">Sign in to view this order</h1>
-          <Link
-            href={`/user?next=/orders/${id}`}
-            className="mt-6 inline-flex rounded-lg bg-zinc-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
-          >
-            Sign in
-          </Link>
+          <p className="text-sm text-zinc-500">Checking your session...</p>
         </section>
       </main>
     );
@@ -163,6 +165,8 @@ const OrderDetailPage = () => {
             </section>
 
             <aside className="space-y-6">
+              <PaymentSection orderId={id} token={token} />
+
               <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
                 <h2 className="text-xl font-semibold tracking-tight">Shipping</h2>
                 <div className="mt-4 space-y-1 text-sm text-zinc-600">

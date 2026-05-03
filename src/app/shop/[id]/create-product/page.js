@@ -7,6 +7,7 @@ import Input from "@/components/ui/Input";
 import { createProduct as createProductAPI } from "@/api";
 import { PRODUCT_SIZES } from "@/config/constants";
 import { useAuth } from "@/hooks/useAuth";
+import { uploadProductImage } from "@/utils/productImages";
 import {
   getTotalSizeStock,
   normalizeProductSizes,
@@ -176,6 +177,18 @@ const CreateProductPage = () => {
 
     setLoading(true);
 
+    let imageUrl = formData.imageUrl.trim();
+
+    if (!imageUrl && images.length > 0) {
+      try {
+        imageUrl = await uploadProductImage(images[0]);
+      } catch (uploadError) {
+        setError(uploadError?.message || "Failed to upload product image");
+        setLoading(false);
+        return;
+      }
+    }
+
     const productData = {
       name: formData.name.trim(),
       description: formData.description.trim(),
@@ -191,8 +204,8 @@ const CreateProductPage = () => {
       },
     };
 
-    if (formData.imageUrl.trim()) {
-      productData.imageUrl = formData.imageUrl.trim();
+    if (imageUrl) {
+      productData.imageUrl = imageUrl;
     }
 
     const result = await createProductAPI(token, productData);

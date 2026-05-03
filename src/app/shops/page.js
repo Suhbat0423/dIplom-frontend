@@ -1,59 +1,53 @@
 import Link from "next/link";
-import { getStores } from "@/api";
-import BrandTextButton from "@/components/ui/BrandTextButton";
+import { getProducts, getStores } from "@/api";
+import { getProductList } from "@/api/product";
+import { getStoreList } from "@/api/store";
+import ProductCardAddToCartButton from "@/components/shop/ProductCardAddToCartButton";
 
 export const dynamic = "force-dynamic";
 
-const categories = [
-  "All Brands",
-  "Minimal",
-  "Streetwear",
-  "Tailoring",
-  "Luxury",
-  "Womenswear",
-  "Menswear",
-  "Accessories",
-  "Local Labels",
-];
-
 const fallbackImages = [
-  "https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
   "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80",
   "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=900&q=80",
 ];
 
-const getBrandImage = (store, index) => {
-  const image = store.coverImage || store.logo;
+const getProductImage = (product, index) => {
+  const image = product.imageUrl || product.image;
 
   if (image?.startsWith("http") || image?.startsWith("/")) return image;
 
   return fallbackImages[index % fallbackImages.length];
 };
 
-const getBrandBadge = (store) => {
-  if (store.verified) {
-    return "Verified";
-  }
+const formatCurrency = (value) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(Number(value || 0));
 
-  return store.isActive === false ? "Inactive" : "Brand";
+const getProductCategory = (product) => {
+  return product.metadata?.category || product.category || "New arrival";
 };
 
-const shop = async () => {
-  const result = await getStores();
-  const stores = Array.isArray(result.data) ? result.data : [];
+const ShopPage = async () => {
+  const [productsResult, storesResult] = await Promise.all([getProducts(), getStores()]);
+  const products = getProductList(productsResult.data);
+  const stores = getStoreList(storesResult.data);
+  const storeById = new Map(
+    stores.map((store) => [String(store._id || store.id), store]),
+  );
 
   return (
     <main className="mt-14 bg-white text-zinc-950">
       <div className="overflow-hidden border-b border-zinc-200 bg-zinc-950 py-2 text-xs font-medium uppercase tracking-[0.18em] text-white">
         <div className="flex w-max animate-[marquee_24s_linear_infinite] gap-10 px-8">
-          <span>Featured brands updated weekly</span>
-          <span>Independent labels now online</span>
-          <span>Members get early brand access</span>
-          <span>Featured brands updated weekly</span>
-          <span>Independent labels now online</span>
+          <span>New product edits added weekly</span>
+          <span>Ready-to-cart styles from independent brands</span>
+          <span>Fresh arrivals across tailoring and essentials</span>
+          <span>New product edits added weekly</span>
+          <span>Ready-to-cart styles from independent brands</span>
         </div>
       </div>
 
@@ -64,78 +58,85 @@ const shop = async () => {
               Shop
             </p>
             <h1 className="mt-2 text-5xl font-semibold tracking-tight md:text-6xl">
-              Brands
+              Shop
             </h1>
+            <p className="mt-3 max-w-2xl text-sm text-zinc-500">
+              Browse products only. Brands stay separate on the brands page.
+            </p>
           </div>
 
-          <label className="flex w-full items-center justify-between gap-3 border border-zinc-200 px-4 py-3 text-sm md:w-auto">
-            <span className="text-zinc-500">Sort by:</span>
-            <select className="bg-transparent font-medium outline-none">
-              <option>Featured</option>
-              <option>Newest</option>
-              <option>A to Z</option>
-              <option>Most wanted</option>
-            </select>
-          </label>
-        </div>
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          {categories.map((category, index) => (
-            <BrandTextButton key={category} active={index === 0}>
-              {category}
-            </BrandTextButton>
-          ))}
+          <p className="text-sm text-zinc-500">
+            {products.length > 0
+              ? `${products.length} products available now`
+              : "No products available right now"}
+          </p>
         </div>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.85fr)]">
           <section className="grid grid-cols-1 gap-x-5 gap-y-9 sm:grid-cols-2 xl:grid-cols-3">
-            {stores.length > 0 ? (
-              stores.map((brand, index) => (
-                <article key={brand._id || brand.id || brand.name} className="group">
-                <div className="relative aspect-[4/5] overflow-hidden bg-zinc-100">
-                  <img
-                    src={getBrandImage(brand, index)}
-                    alt={brand.name}
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                  />
-                  <span className="absolute left-3 top-3 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-900">
-                    {getBrandBadge(brand)}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label={`Save ${brand.name}`}
-                    className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg leading-none transition hover:bg-zinc-950 hover:text-white"
-                  >
-                    ♡
-                  </button>
-                  <Link
-                    href={`/shops/${brand._id || brand.id}`}
-                    className="absolute bottom-3 left-3 right-3 translate-y-3 bg-white px-4 py-3 text-sm font-semibold opacity-0 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100"
-                  >
-                    View brand
-                  </Link>
-                </div>
+            {products.length > 0 ? (
+              products.map((product, index) => {
+                const store = storeById.get(String(product.storeId));
+                const brandName =
+                  store?.name || product.storeName || product.brandName || "Independent brand";
+                const category = getProductCategory(product);
 
-                <div className="mt-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <h2 className="text-xl font-semibold tracking-tight">
-                      {brand.name}
-                    </h2>
-                    <p className="text-sm font-medium text-zinc-500">
-                      {brand.verified ? "Verified" : "Independent"}
-                    </p>
-                  </div>
-                  <p className="mt-1 text-sm text-zinc-500">
-                    {brand.description || "Fashion brand"}
-                  </p>
-                </div>
-              </article>
-              ))
+                return (
+                  <article key={product._id || product.id || `${product.name}-${index}`} className="group">
+                    <Link
+                      href={`/products/${product._id || product.id}`}
+                      className="relative block aspect-[4/5] overflow-hidden bg-zinc-100"
+                    >
+                      <img
+                        src={getProductImage(product, index)}
+                        alt={product.name}
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      />
+                      <span className="absolute left-3 top-3 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-900">
+                        {category}
+                      </span>
+                    </Link>
+
+                    <div className="mt-4 space-y-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
+                            {brandName}
+                          </p>
+                          <Link
+                            href={`/products/${product._id || product.id}`}
+                            className="mt-2 block text-xl font-semibold tracking-tight transition hover:text-zinc-600"
+                          >
+                            {product.name}
+                          </Link>
+                        </div>
+                        <p className="text-sm font-semibold text-zinc-900">
+                          {formatCurrency(product.price)}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-3 text-sm text-zinc-500">
+                        <span>{category}</span>
+                        {store && (
+                          <Link
+                            href={`/brands/${store._id || store.id}`}
+                            className="font-medium text-zinc-700 transition hover:text-zinc-950"
+                          >
+                            View brand
+                          </Link>
+                        )}
+                      </div>
+
+                      <ProductCardAddToCartButton product={product} />
+                    </div>
+                  </article>
+                );
+              })
             ) : (
               <div className="col-span-full border border-zinc-200 p-8 text-zinc-600">
-                {result.success === false
-                  ? result.message || "Failed to load brands."
-                  : "No brands found."}
+                {productsResult.success === false
+                  ? productsResult.message || "Failed to load products."
+                  : "No products found."}
               </div>
             )}
           </section>
@@ -149,13 +150,13 @@ const shop = async () => {
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
                 <p className="text-sm uppercase tracking-[0.24em]">
-                  Brand Edit
+                  Shop Edit
                 </p>
                 <h2 className="mt-2 text-4xl font-semibold tracking-tight">
-                  Names shaping the season.
+                  Product highlights for the season.
                 </h2>
                 <p className="mt-3 max-w-sm text-sm text-white/80">
-                  Curated labels selected for cut, fabric, and point of view.
+                  A focused shop grid with brand, category, and cart actions in one place.
                 </p>
               </div>
             </div>
@@ -166,4 +167,4 @@ const shop = async () => {
   );
 };
 
-export default shop;
+export default ShopPage;
