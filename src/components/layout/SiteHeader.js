@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Cart, Search, User } from "@/assets/icons";
 import AnimatedLogo from "@/components/layout/AnimatedLogo";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,12 +11,13 @@ import { getDefaultRedirectForRole, getUserProfilePath } from "@/utils/auth";
 const navItems = [
   { label: "Shop", href: "/shops" },
   { label: "Brands", href: "/brands" },
-  { label: "Sale", href: "/sale" },
   { label: "About", href: "/about" },
 ];
 
 const SiteHeader = ({ scrollY = 0, variant = "solid" }) => {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const auth = useAuth();
   const isTransparent = variant === "transparent";
   const [windowScrollY, setWindowScrollY] = useState(0);
@@ -35,6 +36,14 @@ const SiteHeader = ({ scrollY = 0, variant = "solid" }) => {
     } transition-colors duration-200`;
   };
   const animatedScrollY = scrollY > 0 ? scrollY : windowScrollY;
+  const searchInputDefault = pathname === "/search" ? searchParams.get("q") || "" : "";
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const normalized = String(formData.get("q") || "").trim();
+    router.push(normalized ? `/search?q=${encodeURIComponent(normalized)}` : "/search");
+  };
 
   useEffect(() => {
     if (!isTransparent) return undefined;
@@ -73,12 +82,25 @@ const SiteHeader = ({ scrollY = 0, variant = "solid" }) => {
           ))}
         </ul>
 
-        <ul className="flex gap-6">
-          <Link className="hover:text-gray-600" href="/search">
-            <li>
-              <Search />
-            </li>
+        <div className="flex items-center gap-4">
+          <form onSubmit={handleSearchSubmit} className="relative hidden md:block">
+            <input
+              key={`transparent-${pathname}-${searchInputDefault}`}
+              name="q"
+              type="search"
+              defaultValue={searchInputDefault}
+              placeholder="Search"
+              className="h-10 w-44 rounded-full border border-white/25 bg-white/10 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-white/70 focus:border-white focus:bg-white/15"
+            />
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/75">
+              <Search size={18} />
+            </span>
+          </form>
+          <Link className="md:hidden hover:text-gray-600" href="/search">
+            <Search />
           </Link>
+
+          <ul className="flex gap-6">
           <Link className="hover:text-gray-600" href={cartHref}>
             <li>
               <Cart />
@@ -89,7 +111,8 @@ const SiteHeader = ({ scrollY = 0, variant = "solid" }) => {
               <User />
             </Link>
           </li>
-        </ul>
+          </ul>
+        </div>
       </div>
     );
   }
@@ -122,12 +145,25 @@ const SiteHeader = ({ scrollY = 0, variant = "solid" }) => {
         ))}
       </ul>
 
-      <ul className="flex gap-6">
-        <Link href="/search">
-          <li>
-            <Search />
-          </li>
+      <div className="flex items-center gap-6">
+        <form onSubmit={handleSearchSubmit} className="relative hidden md:block">
+          <input
+            key={`solid-${pathname}-${searchInputDefault}`}
+            name="q"
+            type="search"
+            defaultValue={searchInputDefault}
+            placeholder="Search"
+            className="h-10 w-44 rounded-full border border-zinc-300 bg-zinc-50 pl-10 pr-4 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-500 focus:border-zinc-950 focus:bg-white"
+          />
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">
+            <Search size={18} />
+          </span>
+        </form>
+        <Link className="md:hidden" href="/search">
+          <Search />
         </Link>
+
+        <ul className="flex gap-6">
         <Link href={cartHref}>
           <li>
             <Cart />
@@ -138,7 +174,8 @@ const SiteHeader = ({ scrollY = 0, variant = "solid" }) => {
             <User />
           </Link>
         </li>
-      </ul>
+        </ul>
+      </div>
     </div>
   );
 };

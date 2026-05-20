@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { requestStoreVerification, updateStore } from "@/api/store";
 import { useAuth } from "@/hooks/useAuth";
@@ -203,13 +204,22 @@ const ImagePicker = ({
         }`}
       >
         {preview ? (
-          <img
-            src={preview}
-            alt={title}
-            className={`h-full w-full object-cover transition duration-300 ${
-              locked ? "" : "group-hover:scale-[1.02]"
-            } ${isCover ? "aspect-[16/7]" : "aspect-square max-h-48 max-w-48 rounded-lg"}`}
-          />
+          <div
+            className={`relative w-full ${
+              isCover ? "aspect-[16/7]" : "aspect-square max-h-48 max-w-48 rounded-lg"
+            }`}
+          >
+            <Image
+              src={preview}
+              alt={title}
+              fill
+              sizes={isCover ? "100vw" : "192px"}
+              unoptimized={preview.startsWith("blob:")}
+              className={`object-cover transition duration-300 ${
+                locked ? "" : "group-hover:scale-[1.02]"
+              }`}
+            />
+          </div>
         ) : (
           <div className="px-6 py-10">
             <p className={`text-sm font-medium ${missing ? "text-red-700" : "text-zinc-900"}`}>

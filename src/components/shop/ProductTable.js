@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { deleteProduct } from "@/api";
+import { NoticeBanner, PanelState } from "@/components/ui/PageState";
 import { useAuth } from "@/hooks/useAuth";
 import {
   getProductSizeStock,
@@ -60,12 +61,22 @@ const ProductTable = ({ initialProducts = [], storeId, loadError }) => {
   return (
     <div>
       {message && (
-        <div className="mb-4 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-700">
-          {message}
+        <div className="mb-4">
+          <NoticeBanner tone={message.includes("Failed") ? "error" : "success"}>
+            {message}
+          </NoticeBanner>
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+      {products.length === 0 ? (
+        <PanelState
+          title="No products found"
+          description={loadError || "Create your first product to start building your storefront."}
+          actionHref={`/shop/${storeId}/create-product`}
+          actionLabel="Create product"
+        />
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
         <table className="w-full">
           <thead className="border-b border-zinc-200 bg-zinc-50">
             <tr>
@@ -172,22 +183,11 @@ const ProductTable = ({ initialProducts = [], storeId, loadError }) => {
                   </tr>
                 );
               })
-            ) : (
-              <tr className="border-b border-zinc-200 hover:bg-zinc-50">
-                <td colSpan="6" className="px-6 py-8 text-center text-zinc-500">
-                  {loadError || "No products found."}{" "}
-                  <Link
-                    href={`/shop/${storeId}/create-product`}
-                    className="text-blue-600 hover:underline"
-                  >
-                    Create one now
-                  </Link>
-                </td>
-              </tr>
-            )}
+            ) : null}
           </tbody>
         </table>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

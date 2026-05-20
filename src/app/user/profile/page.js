@@ -1,9 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getMyOrders } from "@/api";
+import { LoadingPanel, NoticeBanner, PanelState } from "@/components/ui/PageState";
 import { AUTH_ROLES } from "@/config/constants";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import {
@@ -116,9 +118,9 @@ const UserProfilePage = () => {
   if (authLoading || !isAuthorized) {
     return (
       <main className="mt-14 min-h-screen bg-zinc-50 px-5 py-12 text-zinc-950 sm:px-8 lg:px-10">
-        <section className="mx-auto max-w-3xl rounded-lg border border-zinc-200 bg-white p-8 text-center shadow-sm">
-          <p className="text-sm text-zinc-500">Checking your session...</p>
-        </section>
+        <div className="mx-auto max-w-3xl">
+          <LoadingPanel message="Checking your session..." />
+        </div>
       </main>
     );
   }
@@ -171,18 +173,23 @@ const UserProfilePage = () => {
               </div>
 
               {error && (
-                <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {error}
+                <div className="mt-6">
+                  <NoticeBanner tone="error">{error}</NoticeBanner>
                 </div>
               )}
 
               {loading ? (
-                <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
-                  Loading orders...
+                <div className="mt-6">
+                  <LoadingPanel message="Loading orders..." />
                 </div>
               ) : orders.length === 0 ? (
-                <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">
-                  You have not placed any orders yet.
+                <div className="mt-6">
+                  <PanelState
+                    title="No orders yet"
+                    description="You have not placed any orders yet."
+                    actionHref="/shops"
+                    actionLabel="Start shopping"
+                  />
                 </div>
               ) : (
                 <div className="mt-6 space-y-4">
@@ -229,12 +236,17 @@ const UserProfilePage = () => {
               </div>
 
               {loading ? (
-                <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
-                  Loading ordered items...
+                <div className="mt-6">
+                  <LoadingPanel message="Loading ordered items..." />
                 </div>
               ) : orderedItems.length === 0 ? (
-                <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">
-                  Ordered items will appear here after your first purchase.
+                <div className="mt-6">
+                  <PanelState
+                    title="No ordered items yet"
+                    description="Ordered items will appear here after your first purchase."
+                    actionHref="/shops"
+                    actionLabel="Explore products"
+                  />
                 </div>
               ) : (
                 <div className="mt-6 space-y-4">
@@ -243,8 +255,14 @@ const UserProfilePage = () => {
                       key={`${item.orderId}-${item.name}-${item.size || "no-size"}-${index}`}
                       className="grid gap-4 rounded-lg border border-zinc-200 p-4 sm:grid-cols-[84px_minmax(0,1fr)]"
                     >
-                      <div className="aspect-square overflow-hidden rounded-lg bg-zinc-100">
-                        <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                      <div className="relative aspect-square overflow-hidden rounded-lg bg-zinc-100">
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          sizes="84px"
+                          className="object-cover"
+                        />
                       </div>
                       <div className="min-w-0">
                         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">

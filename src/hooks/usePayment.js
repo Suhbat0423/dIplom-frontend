@@ -8,6 +8,7 @@ import {
   getPaymentByOrder,
   getPaymentFromResponse,
   getPaymentId,
+  refundPayment,
 } from "@/api/paymentApi";
 
 export const usePayment = (orderId, token) => {
@@ -151,6 +152,20 @@ export const usePayment = (orderId, token) => {
     return nextPayment;
   };
 
+  const refund = async () => {
+    const paymentId = getPaymentId(payment);
+
+    if (!paymentId) {
+      const requestError = new Error("Payment is not available to refund.");
+      setError(requestError.message);
+      throw requestError;
+    }
+
+    const nextPayment = await runAction("refund", () => refundPayment(paymentId, token));
+    setSuccessMessage("Refund requested.");
+    return nextPayment;
+  };
+
   return {
     payment,
     loading,
@@ -161,6 +176,7 @@ export const usePayment = (orderId, token) => {
     create,
     confirm,
     fail,
+    refund,
     refreshPayment,
   };
 };

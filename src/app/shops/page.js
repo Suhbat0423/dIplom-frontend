@@ -1,8 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
 import { getProducts, getStores } from "@/api";
 import { getProductList } from "@/api/product";
 import { getStoreList } from "@/api/store";
 import ProductCardAddToCartButton from "@/components/shop/ProductCardAddToCartButton";
+import { getSafeImageSrc } from "@/utils/imageSources";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +17,7 @@ const fallbackImages = [
 
 const getProductImage = (product, index) => {
   const image = product.imageUrl || product.image;
-
-  if (image?.startsWith("http") || image?.startsWith("/")) return image;
-
-  return fallbackImages[index % fallbackImages.length];
+  return getSafeImageSrc(image, fallbackImages[index % fallbackImages.length]);
 };
 
 const formatCurrency = (value) =>
@@ -87,10 +86,12 @@ const ShopPage = async () => {
                       href={`/products/${product._id || product.id}`}
                       className="relative block aspect-[4/5] overflow-hidden bg-zinc-100"
                     >
-                      <img
+                      <Image
                         src={getProductImage(product, index)}
                         alt={product.name}
-                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                        className="object-cover transition duration-500 group-hover:scale-105"
                       />
                       <span className="absolute left-3 top-3 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-900">
                         {category}
@@ -143,10 +144,12 @@ const ShopPage = async () => {
 
           <aside className="order-first lg:order-none">
             <div className="sticky top-20 min-h-[460px] overflow-hidden bg-zinc-100 lg:min-h-[calc(100vh-7rem)]">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1485968579580-b6d095142e6e?auto=format&fit=crop&w=1200&q=80"
                 alt="New season editorial"
-                className="h-full min-h-[460px] w-full object-cover"
+                fill
+                sizes="(max-width: 1024px) 100vw, 320px"
+                className="object-cover"
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
                 <p className="text-sm uppercase tracking-[0.24em]">

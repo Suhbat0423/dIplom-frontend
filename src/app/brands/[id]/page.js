@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProductsByStore, getStoreById } from "@/api";
 import { getProductList } from "@/api/product";
+import { getSafeImageSrc } from "@/utils/imageSources";
 import {
   getProductSizeStock,
   getTotalSizeStock,
@@ -29,21 +31,14 @@ const formatCurrency = (value) => {
 
 const getStoreImage = (store) => {
   const image = store.coverImage || store.logo;
-
-  if (image?.startsWith("http") || image?.startsWith("/")) return image;
-
-  return fallbackHero;
+  return getSafeImageSrc(image, fallbackHero);
 };
 
 const getProductImage = (product, index) => {
-  if (
-    product.imageUrl?.startsWith("http") ||
-    product.imageUrl?.startsWith("/")
-  ) {
-    return product.imageUrl;
-  }
-
-  return fallbackProductImages[index % fallbackProductImages.length];
+  return getSafeImageSrc(
+    product.imageUrl || product.image,
+    fallbackProductImages[index % fallbackProductImages.length],
+  );
 };
 
 const BrandDetailPage = async ({ params }) => {
@@ -103,10 +98,12 @@ const BrandDetailPage = async ({ params }) => {
         </div>
 
         <div className="relative min-h-[420px] overflow-hidden bg-zinc-100">
-          <img
+          <Image
             src={getStoreImage(store)}
             alt={store.name}
-            className="h-140 w-full object-cover"
+            fill
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            className="object-cover"
           />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
             <p className="max-w-md text-sm uppercase tracking-[0.24em]">
@@ -149,10 +146,12 @@ const BrandDetailPage = async ({ params }) => {
                     href={`/products/${product._id || product.id}`}
                     className="relative block aspect-[4/5] overflow-hidden bg-zinc-100"
                   >
-                    <img
+                    <Image
                       src={getProductImage(product, index)}
                       alt={product.name}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                      className="object-cover transition duration-500 group-hover:scale-105"
                     />
                     <span className="absolute left-3 top-3 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-900">
                       {inStock ? "Available" : "Sold out"}

@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProductById, getStoreById } from "@/api";
 import ProductPurchasePanel from "@/components/shop/ProductPurchasePanel";
+import { getSafeImageSrc } from "@/utils/imageSources";
 import {
   getProductSizeStock,
   getTotalSizeStock,
@@ -21,11 +23,7 @@ const formatCurrency = (value) => {
 };
 
 const getProductImage = (product) => {
-  if (product.imageUrl?.startsWith("http") || product.imageUrl?.startsWith("/")) {
-    return product.imageUrl;
-  }
-
-  return fallbackProductImage;
+  return getSafeImageSrc(product.imageUrl || product.image, fallbackProductImage);
 };
 
 const getProductMeta = (product, key, fallback) => {
@@ -53,10 +51,12 @@ const ProductPage = async ({ params }) => {
       <section className="grid min-h-[calc(100vh-3.5rem)] lg:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
         <div className="bg-zinc-100">
           <div className="sticky top-14 min-h-[560px] lg:min-h-[calc(100vh-3.5rem)]">
-            <img
+            <Image
               src={getProductImage(product)}
               alt={product.name}
-              className="h-full min-h-[560px] w-full object-cover lg:min-h-[calc(100vh-3.5rem)]"
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
             />
           </div>
         </div>

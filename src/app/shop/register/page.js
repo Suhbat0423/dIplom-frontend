@@ -86,7 +86,7 @@ const ShopRegister = () => {
 
           setSuccessMessage("Account created successfully.");
           if (result?.data?.store?._id) {
-            router.push(`/shop/${result.data.store._id}`);
+            router.push(`/shop/${result.data.store._id}/dashboard`);
           } else {
             router.push("/shop");
           }

@@ -5,6 +5,7 @@ import { getProductList } from "@/api/product";
 import { getStoreList } from "@/api/store";
 import SiteHeader from "@/components/layout/SiteHeader";
 import SectionHeading from "@/components/home/SectionHeading";
+import { getSafeImageSrc } from "@/utils/imageSources";
 
 export const dynamic = "force-dynamic";
 
@@ -113,30 +114,14 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 0,
   }).format(Number(value || 0));
 
-const allowedImageHosts = new Set(["images.unsplash.com"]);
-
-const isAllowedImageSrc = (src) => {
-  if (!src || typeof src !== "string") return false;
-  if (src.startsWith("/")) return true;
-
-  try {
-    const url = new URL(src);
-    return url.protocol === "https:" && allowedImageHosts.has(url.hostname);
-  } catch {
-    return false;
-  }
-};
-
 const getProductImage = (product, index) => {
   const image = product.imageUrl || product.image;
-  if (isAllowedImageSrc(image)) return image;
-  return fallbackProductImages[index % fallbackProductImages.length];
+  return getSafeImageSrc(image, fallbackProductImages[index % fallbackProductImages.length]);
 };
 
 const getBrandImage = (brand, index) => {
   const image = brand.coverImage || brand.logo || brand.imageUrl;
-  if (isAllowedImageSrc(image)) return image;
-  return fallbackBrandImages[index % fallbackBrandImages.length];
+  return getSafeImageSrc(image, fallbackBrandImages[index % fallbackBrandImages.length]);
 };
 
 const getBrandName = (product, storeById) => {

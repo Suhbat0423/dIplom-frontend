@@ -321,7 +321,7 @@ export const getShopDashboardPath = (session) => {
     return "";
   }
 
-  return `/shop/${resolvedStoreId}`;
+  return `/shop/${resolvedStoreId}/dashboard`;
 };
 
 export const getUserProfilePath = () => "/user/profile";

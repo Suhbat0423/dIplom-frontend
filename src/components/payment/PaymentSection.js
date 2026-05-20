@@ -2,6 +2,7 @@
 
 import { getPaymentId, getPaymentStatus } from "@/api/paymentApi";
 import { usePayment } from "@/hooks/usePayment";
+import { NoticeBanner } from "@/components/ui/PageState";
 import { formatDate, getStatusClass } from "@/utils/orderDisplay";
 
 const STATUS_LABELS = {
@@ -41,7 +42,7 @@ const Button = ({ children, disabled, onClick, tone = "primary" }) => {
   );
 };
 
-const PaymentSection = ({ orderId, token }) => {
+const PaymentSection = ({ orderId, token, onStatusChange = null }) => {
   const {
     payment,
     loading,
@@ -52,24 +53,29 @@ const PaymentSection = ({ orderId, token }) => {
     create,
     confirm,
     fail,
+    refund,
     refreshPayment,
   } = usePayment(orderId, token);
 
   const paymentId = getPaymentId(payment);
   const status = getPaymentStatus(payment);
   const showPendingActions = paymentId && status === "pending";
+  const showRefundAction = paymentId && status === "paid";
   const canRetry = !paymentId || status === "failed";
   const handleCreate = () => {
-    void create();
+    void create().then(() => onStatusChange?.());
   };
   const handleConfirm = () => {
-    void confirm();
+    void confirm().then(() => onStatusChange?.());
   };
   const handleFail = () => {
-    void fail();
+    void fail().then(() => onStatusChange?.());
+  };
+  const handleRefund = () => {
+    void refund().then(() => onStatusChange?.());
   };
   const handleRefresh = () => {
-    void refreshPayment();
+    void refreshPayment().then(() => onStatusChange?.());
   };
 
   return (
@@ -78,7 +84,7 @@ const PaymentSection = ({ orderId, token }) => {
         <div>
           <h2 className="text-xl font-semibold tracking-tight">Payment</h2>
           <p className="mt-2 text-sm text-zinc-500">
-            Manual payment demo flow wired to payment-service.
+            Demo flow with manual gateway states: create a payment request, confirm or fail it, then issue a refund if the order was already paid.
           </p>
         </div>
         <span className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-semibold ${getStatusClass(status)}`}>
@@ -94,6 +100,12 @@ const PaymentSection = ({ orderId, token }) => {
         ) : (
           <>
             <div className="grid gap-3 text-sm text-zinc-600">
+              <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3">
+                <p className="font-semibold text-zinc-900">Demo steps</p>
+                <p className="mt-1 text-zinc-500">
+                  1. Create payment. 2. Confirm or fail it. 3. Refund paid orders if needed. 4. Refresh to sync the order status panel.
+                </p>
+              </div>
               <div className="flex justify-between gap-3">
                 <span className="text-zinc-500">Payment ID</span>
                 <span className="text-right font-medium text-zinc-950">
@@ -127,15 +139,15 @@ const PaymentSection = ({ orderId, token }) => {
             </div>
 
             {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <NoticeBanner tone="error">
                 {error}
-              </div>
+              </NoticeBanner>
             )}
 
             {successMessage && (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              <NoticeBanner tone="success">
                 {successMessage}
-              </div>
+              </NoticeBanner>
             )}
 
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -154,6 +166,12 @@ const PaymentSection = ({ orderId, token }) => {
               {showPendingActions && (
                 <Button disabled={action === "fail"} onClick={handleFail} tone="danger">
                   {action === "fail" ? "Failing..." : "Fail Payment"}
+                </Button>
+              )}
+
+              {showRefundAction && (
+                <Button disabled={action === "refund"} onClick={handleRefund} tone="danger">
+                  {action === "refund" ? "Refunding..." : "Refund Payment"}
                 </Button>
               )}
 

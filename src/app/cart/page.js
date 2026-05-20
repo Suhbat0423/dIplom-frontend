@@ -1,10 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { clearCart, deleteCartItem, getCart, updateCartItem } from "@/api";
+import { LoadingPanel, NoticeBanner, PanelState } from "@/components/ui/PageState";
 import { AUTH_ROLES } from "@/config/constants";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { getSafeImageSrc } from "@/utils/imageSources";
 import { hasMissingRequiredSize } from "@/utils/orderDisplay";
 
 const fallbackImage =
@@ -27,12 +30,7 @@ const getProductId = (item) => {
 
 const getItemImage = (item) => {
   const image = item?.imageUrl || item?.image || item?.product?.imageUrl;
-
-  if (image?.startsWith("http") || image?.startsWith("/")) {
-    return image;
-  }
-
-  return fallbackImage;
+  return getSafeImageSrc(image, fallbackImage);
 };
 
 const normalizeCartItems = (data) => {
@@ -192,9 +190,9 @@ const CartPage = () => {
   if (authLoading || !isAuthorized) {
     return (
       <main className="mt-14 min-h-screen bg-zinc-50 px-5 py-12 text-zinc-950 sm:px-8 lg:px-10">
-        <section className="mx-auto max-w-3xl rounded-lg border border-zinc-200 bg-white p-8 text-center shadow-sm">
-          <p className="text-sm text-zinc-500">Checking your session...</p>
-        </section>
+        <div className="mx-auto max-w-3xl">
+          <LoadingPanel message="Checking your session..." />
+        </div>
       </main>
     );
   }
@@ -226,33 +224,25 @@ const CartPage = () => {
         </div>
 
         {message && (
-          <div
-            className={`mt-6 rounded-lg border px-4 py-3 text-sm ${
-              message.includes("Failed")
-                ? "border-red-200 bg-red-50 text-red-700"
-                : "border-emerald-200 bg-emerald-50 text-emerald-700"
-            }`}
-          >
-            {message}
+          <div className="mt-6">
+            <NoticeBanner tone={message.includes("Failed") ? "error" : "success"}>
+              {message}
+            </NoticeBanner>
           </div>
         )}
 
         {loading ? (
-          <div className="mt-8 rounded-lg border border-zinc-200 bg-white p-8 text-sm text-zinc-500 shadow-sm">
-            Loading cart...
+          <div className="mt-8">
+            <LoadingPanel message="Loading cart..." />
           </div>
         ) : items.length === 0 ? (
-          <div className="mt-8 rounded-lg border border-zinc-200 bg-white p-8 text-center shadow-sm">
-            <h2 className="text-2xl font-semibold tracking-tight">Your cart is empty</h2>
-            <p className="mt-2 text-sm text-zinc-500">
-              Browse brands and add products when you are ready.
-            </p>
-            <Link
-              href="/shops"
-              className="mt-6 inline-flex rounded-lg bg-zinc-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
-            >
-              Continue shopping
-            </Link>
+          <div className="mt-8">
+            <PanelState
+              title="Your cart is empty"
+              description="Browse brands and add products when you are ready."
+              actionHref="/shops"
+              actionLabel="Continue shopping"
+            />
           </div>
         ) : (
           <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
@@ -270,11 +260,13 @@ const CartPage = () => {
                     key={itemId || productId || item.name}
                     className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:grid-cols-[132px_minmax(0,1fr)]"
                   >
-                    <div className="aspect-square overflow-hidden rounded-lg bg-zinc-100">
-                      <img
+                    <div className="relative aspect-square overflow-hidden rounded-lg bg-zinc-100">
+                      <Image
                         src={getItemImage(item)}
                         alt={item.name || item.product?.name || "Cart item"}
-                        className="h-full w-full object-cover"
+                        fill
+                        sizes="132px"
+                        className="object-cover"
                       />
                     </div>
 

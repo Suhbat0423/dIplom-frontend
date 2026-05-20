@@ -1,9 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createOrder, getCart } from "@/api";
+import { LoadingPanel, NoticeBanner, PanelState } from "@/components/ui/PageState";
 import { AUTH_ROLES } from "@/config/constants";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import {
@@ -162,9 +164,9 @@ const CheckoutPage = () => {
   if (authLoading || !isAuthorized) {
     return (
       <main className="mt-14 min-h-screen bg-zinc-50 px-5 py-12 text-zinc-950 sm:px-8 lg:px-10">
-        <section className="mx-auto max-w-3xl rounded-lg border border-zinc-200 bg-white p-8 text-center shadow-sm">
-          <p className="text-sm text-zinc-500">Checking your session...</p>
-        </section>
+        <div className="mx-auto max-w-3xl">
+          <LoadingPanel message="Checking your session..." />
+        </div>
       </main>
     );
   }
@@ -180,30 +182,23 @@ const CheckoutPage = () => {
         </div>
 
         {(error || success) && (
-          <div
-            className={`mt-6 rounded-lg border px-4 py-3 text-sm ${
-              error
-                ? "border-red-200 bg-red-50 text-red-700"
-                : "border-emerald-200 bg-emerald-50 text-emerald-700"
-            }`}
-          >
-            {error || success}
+          <div className="mt-6">
+            <NoticeBanner tone={error ? "error" : "success"}>{error || success}</NoticeBanner>
           </div>
         )}
 
         {loading ? (
-          <div className="mt-8 rounded-lg border border-zinc-200 bg-white p-8 text-sm text-zinc-500 shadow-sm">
-            Loading checkout...
+          <div className="mt-8">
+            <LoadingPanel message="Loading checkout..." />
           </div>
         ) : items.length === 0 ? (
-          <div className="mt-8 rounded-lg border border-zinc-200 bg-white p-8 text-center shadow-sm">
-            <h2 className="text-2xl font-semibold tracking-tight">Your cart is empty</h2>
-            <Link
-              href="/shops"
-              className="mt-6 inline-flex rounded-lg bg-zinc-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
-            >
-              Continue shopping
-            </Link>
+          <div className="mt-8">
+            <PanelState
+              title="Your cart is empty"
+              description="Add products to your cart before placing an order."
+              actionHref="/shops"
+              actionLabel="Continue shopping"
+            />
           </div>
         ) : (
           <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_390px]">
@@ -258,11 +253,13 @@ const CheckoutPage = () => {
                         key={`${item.productId}-${item.size || "no-size"}`}
                         className="grid gap-4 border-b border-zinc-100 pb-4 last:border-0 last:pb-0 sm:grid-cols-[88px_minmax(0,1fr)]"
                       >
-                        <div className="aspect-square overflow-hidden rounded-lg bg-zinc-100">
-                          <img
+                        <div className="relative aspect-square overflow-hidden rounded-lg bg-zinc-100">
+                          <Image
                             src={getItemImage(item)}
                             alt={getItemName(item)}
-                            className="h-full w-full object-cover"
+                            fill
+                            sizes="88px"
+                            className="object-cover"
                           />
                         </div>
                         <div className="flex min-w-0 justify-between gap-4">

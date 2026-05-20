@@ -78,3 +78,10 @@ export const failPayment = (paymentId, token) => {
     token,
   });
 };
+
+export const refundPayment = (paymentId, token) => {
+  return requestPayment(API_ROUTES.payment.refund(paymentId), {
+    method: "POST",
+    token,
+  });
+};

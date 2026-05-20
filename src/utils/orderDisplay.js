@@ -1,3 +1,5 @@
+import { getSafeImageSrc } from "@/utils/imageSources";
+
 const fallbackImage =
   "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80";
 
@@ -29,12 +31,7 @@ export const getItemName = (item) => {
 
 export const getItemImage = (item) => {
   const image = item?.imageUrl || item?.image || item?.product?.imageUrl;
-
-  if (image?.startsWith("http") || image?.startsWith("/")) {
-    return image;
-  }
-
-  return fallbackImage;
+  return getSafeImageSrc(image, fallbackImage);
 };
 
 export const getOrderId = (order) => {

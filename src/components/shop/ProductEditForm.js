@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { updateProduct } from "@/api";
@@ -453,13 +454,16 @@ const ProductEditForm = ({ product, storeId }) => {
               htmlFor="product-image-upload"
               className="group flex min-h-80 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border border-dashed border-zinc-300 bg-zinc-50 text-center transition hover:border-zinc-900 hover:bg-white"
             >
-              {imagePreview ? (
-                <img
-                  src={imagePreview}
-                  alt={form.name || "Product preview"}
-                  className="aspect-[4/5] h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-                />
-              ) : (
+                {imagePreview ? (
+                  <Image
+                    src={imagePreview}
+                    alt={form.name || "Product preview"}
+                    fill
+                    sizes="390px"
+                    unoptimized={imagePreview.startsWith("blob:")}
+                    className="object-cover transition duration-300 group-hover:scale-[1.02]"
+                  />
+                ) : (
                 <div className="px-6 py-12">
                   <p className="text-sm font-medium text-zinc-900">
                     Click to upload

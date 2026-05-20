@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getStoreOrders, updateOrderStatus } from "@/api";
+import { LoadingPanel, NoticeBanner, PanelState } from "@/components/ui/PageState";
 import { ORDER_STATUSES, PAYMENT_STATUSES } from "@/config/constants";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -99,18 +100,22 @@ const StoreOrdersPage = () => {
       </div>
 
       {message && (
-        <div
-          className={`mb-4 rounded-lg border px-4 py-3 text-sm ${
-            message.includes("Failed")
-              ? "border-red-200 bg-red-50 text-red-700"
-              : "border-emerald-200 bg-emerald-50 text-emerald-700"
-          }`}
-        >
-          {message}
+        <div className="mb-4">
+          <NoticeBanner tone={message.includes("Failed") ? "error" : "success"}>
+            {message}
+          </NoticeBanner>
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+      {loading ? (
+        <LoadingPanel message="Loading store orders..." />
+      ) : orders.length === 0 ? (
+        <PanelState
+          title="No orders yet"
+          description="New customer orders will appear here once your shop starts selling."
+        />
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
         <table className="w-full">
           <thead className="border-b border-zinc-200 bg-zinc-50">
             <tr>
@@ -132,19 +137,7 @@ const StoreOrdersPage = () => {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
-              <tr className="border-b border-zinc-200">
-                <td colSpan="5" className="px-6 py-8 text-center text-zinc-500">
-                  Loading orders...
-                </td>
-              </tr>
-            ) : orders.length === 0 ? (
-              <tr className="border-b border-zinc-200">
-                <td colSpan="5" className="px-6 py-8 text-center text-zinc-500">
-                  No orders yet.
-                </td>
-              </tr>
-            ) : (
+            {(
               orders.map((order) => {
                 const orderId = getOrderId(order);
                 const items = getOrderItems(order);
@@ -215,7 +208,8 @@ const StoreOrdersPage = () => {
             )}
           </tbody>
         </table>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

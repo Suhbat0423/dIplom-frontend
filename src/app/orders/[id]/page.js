@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getOrderById } from "@/api";
 import PaymentSection from "@/components/payment/PaymentSection";
+import { LoadingPanel, NoticeBanner, PanelState } from "@/components/ui/PageState";
 import { AUTH_ROLES } from "@/config/constants";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import {
@@ -68,12 +70,29 @@ const OrderDetailPage = () => {
     };
   }, [authLoading, id, logout, token]);
 
+  const refreshOrder = async () => {
+    if (!token || !id) return;
+
+    setLoading(true);
+    const result = await getOrderById(token, id);
+
+    if (!result.success) {
+      setError(result.message || "Failed to load order.");
+      setLoading(false);
+      return;
+    }
+
+    setOrder(result.data);
+    setError("");
+    setLoading(false);
+  };
+
   if (authLoading || !isAuthorized) {
     return (
       <main className="mt-14 min-h-screen bg-zinc-50 px-5 py-12 text-zinc-950 sm:px-8 lg:px-10">
-        <section className="mx-auto max-w-3xl rounded-lg border border-zinc-200 bg-white p-8 text-center shadow-sm">
-          <p className="text-sm text-zinc-500">Checking your session...</p>
-        </section>
+        <div className="mx-auto max-w-3xl">
+          <LoadingPanel message="Checking your session..." />
+        </div>
       </main>
     );
   }
@@ -89,18 +108,20 @@ const OrderDetailPage = () => {
         </Link>
 
         {error && (
-          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="mt-6">
+            <NoticeBanner tone="error">
             {error}
+            </NoticeBanner>
           </div>
         )}
 
         {loading ? (
-          <div className="mt-8 rounded-lg border border-zinc-200 bg-white p-8 text-sm text-zinc-500 shadow-sm">
-            Loading order...
+          <div className="mt-8">
+            <LoadingPanel message="Loading order..." />
           </div>
         ) : !order ? (
-          <div className="mt-8 rounded-lg border border-zinc-200 bg-white p-8 text-center shadow-sm">
-            Order not found.
+          <div className="mt-8">
+            <PanelState title="Order not found" description="This order could not be loaded." />
           </div>
         ) : (
           <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
@@ -135,11 +156,13 @@ const OrderDetailPage = () => {
                       key={item._id || `${item.productId}-${item.size || ""}`}
                       className="grid gap-4 border-b border-zinc-100 pb-4 last:border-0 last:pb-0 sm:grid-cols-[88px_minmax(0,1fr)]"
                     >
-                      <div className="aspect-square overflow-hidden rounded-lg bg-zinc-100">
-                        <img
+                      <div className="relative aspect-square overflow-hidden rounded-lg bg-zinc-100">
+                        <Image
                           src={getItemImage(item)}
                           alt={getItemName(item)}
-                          className="h-full w-full object-cover"
+                          fill
+                          sizes="88px"
+                          className="object-cover"
                         />
                       </div>
                       <div className="flex min-w-0 justify-between gap-4">
@@ -165,7 +188,7 @@ const OrderDetailPage = () => {
             </section>
 
             <aside className="space-y-6">
-              <PaymentSection orderId={id} token={token} />
+              <PaymentSection orderId={id} token={token} onStatusChange={refreshOrder} />
 
               <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
                 <h2 className="text-xl font-semibold tracking-tight">Shipping</h2>
